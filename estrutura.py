@@ -1,3 +1,4 @@
+from datetime import date
 
 # Variáveis calculadas diariamente no balanço hídrico
 class VariaveisBalHidrico():
@@ -37,9 +38,10 @@ class ParamSimul():
         self.RESERVAUTIL = 200
         self.PROFMAXIMA = 350
         self.escoamentoSuperficial = 20
+        self.anosDadosHistoricos = [2011]
 
         ### As datas de plantio e colheita devem ser definidas pelo usuario
-        # self.inicioSimul = date(2014, 1, 1)
-        # self.fimSimul = date(2014, 12, 31)
-        # self.inicioPlantio = date(2014, 1, 6)
-        # self.diaColheita = date(2014, 4, 15)
+        self.inicioSimul = date(2014, 1, 1)
+        self.fimSimul = date(2014, 12, 31)
+        self.inicioPlantio = date(2014, 1, 6)
+        self.diaColheita = date(2014, 4, 15)

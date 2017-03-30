@@ -12,7 +12,13 @@ class Estacao():
         self.dados = 'dados/SP/SP_Campinas_9001125.csv'
 
 
-    def lerDadosPrecTemp(self, dataInicial, dataFinal = None):
+    def lerDadosPrecTemp(self, dataInicial = None, dataFinal = None):
+
+        # Se nenhuma data for especificada, pegar todos os dados disponíveis
+        if dataInicial is None:
+            dataInicial = datetime.date(1800, 1, 1)
+            dataFinal = datetime.date(2500, 1, 1)
+
         if dataFinal is None:
             dataFinal = dataInicial
 
@@ -49,6 +55,37 @@ class Estacao():
 
             return (precipitacao, temperatura)
 
+    def lerDadosAnuaisPrecTemp(self, anos):
+
+        precipitacao = {}
+        temperatura = {}
+
+        with open(self.dados) as arquivoDados:
+            reader = csv.DictReader(arquivoDados, self.keys, delimiter=';')
+            cabecalho = True
+            data = None
+
+            for linha in reader:
+                if cabecalho is False:
+                    if data is None:
+                        data = str(linha['data']).rstrip().lstrip()
+                        dia = int(data[:2])
+                        mes = int(data[3:5])
+                        ano = int(data[6:])
+                        data = datetime.date(ano, mes, dia)
+                    else:
+                        data = data - datetime.timedelta(days=1)
+
+                    if data.year in anos:
+                        precipitacao[data] = None if linha['prec'] == '' else float(linha['prec'].replace(',', '.'))
+                        temperatura[data] = None if linha['tmed'] == '' else float(linha['tmed'].replace(',', '.'))
+
+
+                else:
+                    if str(linha['data']).rstrip(' ') == 'data':
+                        cabecalho = False
+
+            return (precipitacao, temperatura)
 
 
 estacao = Estacao()
