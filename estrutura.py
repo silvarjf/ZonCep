@@ -1,29 +1,31 @@
-from datetime import date
+
 
 # Variáveis calculadas diariamente no balanço hídrico
-class VariaveisBalHidrico():
-    def __init__(self, parametros):
+def VariaveisBalHidrico(parametros):
 
-        #
-        self.ETP = 0
-        self.Esc = 0
-        self.Apport = 0
-        self.Kc = 1
-        self.Evs = 0
-        self.Hum = parametros.ESTOQUEINICIAL
-        self.Dr = 0
-        self.Vrad = 0
-        self.StRurMax = 0
-        self.Hr = 0
-        self.Epc = 0
-        self.Etr = 0
-        self.Etm = 0
-        self.Eps = 0
-        self.StRur = 0
-        self.StRuSurf = 0
-        self.StRu = parametros.ESTOQUEINICIAL
-        self.TP = 0
-        self.EtrEtm = 0
+    varSaida = {}
+    #
+    varSaida['ETP'] = 0
+    varSaida['Esc'] = 0
+    varSaida['Apport'] = 0
+    varSaida['Kc'] = 1
+    varSaida['Evs'] = 0
+    varSaida['Hum'] = parametros.ESTOQUEINICIAL
+    varSaida['Dr'] = 0
+    varSaida['Vrad'] = 0
+    varSaida['StRurMax'] = 0
+    varSaida['Hr'] = 0
+    varSaida['Epc'] = 0
+    varSaida['Etr'] = 0
+    varSaida['Etm'] = 0
+    varSaida['Eps'] = 0
+    varSaida['StRur'] = 0
+    varSaida['StRuSurf'] = 0
+    varSaida['StRu'] = parametros.ESTOQUEINICIAL
+    varSaida['TP'] = 0
+    varSaida['EtrEtm'] = 0
+
+    return varSaida
 
 
 
@@ -36,12 +38,12 @@ class ParamSimul():
         self.mulch = 0.7
         self.RUSURF = 20
         self.RESERVAUTIL = 200
-        self.PROFMAXIMA = 350
+        self.tipoSolo = 1
         self.escoamentoSuperficial = 20
         self.anosDadosHistoricos = [2011]
 
         ### As datas de plantio e colheita devem ser definidas pelo usuario
-        self.inicioSimul = date(2014, 1, 1)
-        self.fimSimul = date(2014, 12, 31)
-        self.inicioPlantio = date(2014, 1, 6)
-        self.diaColheita = date(2014, 4, 15)
+        self.inicioSimul = (1, 1)
+        self.fimSimul = (12, 31)
+        self.inicioPlantio = (1, 6)
+        self.diaColheita = (4, 15)
