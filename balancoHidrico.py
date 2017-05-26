@@ -30,8 +30,8 @@ class balancoHidrico():
 
         self.estacao = estacao
 
-        self.parametros.CAD = self.cultura.reservaUtilSolo[self.parametros.tipoSolo - 1]
-        self.parametros.PROFMAXIMA = self.parametros.CAD * 1000/self.parametros.RESERVAUTIL
+        self.parametros.RESERVAUTIL = self.cultura.reservaUtilSolo[self.parametros.tipoSolo - 1]
+        self.parametros.PROFMAXIMA = self.parametros.RESERVAUTIL * 1000/self.parametros.CAD
 
         self.dadosMeteorologicos = self.estacao.lerDadosMeteorologicos(self.parametros.anosDadosHistoricos)
 
@@ -185,7 +185,7 @@ class balancoHidrico():
 
     def rempliRu(self, Apport, StRu, Hum):
 
-        # Alteração. Notou-se que esse valor é fixo e igual à CAD. O cálculo não precisa ser feito sempre
+        # Alteração. Notou-se que esse valor é fixo e igual à Reserva Útil. O cálculo não precisa ser feito sempre
         # StRuMax = self.parametros.RESERVAUTIL*self.parametros.PROFMAXIMA/1000
         StRu = StRu + Apport
         Dr = 0
@@ -194,9 +194,9 @@ class balancoHidrico():
         #     Dr = StRu - StRuMax
         #     StRu = StRuMax
 
-        if StRu > self.parametros.CAD:
-            Dr = StRu - self.parametros.CAD
-            StRu = self.parametros.CAD
+        if StRu > self.parametros.RESERVAUTIL:
+            Dr = StRu - self.parametros.RESERVAUTIL
+            StRu = self.parametros.RESERVAUTIL
 
         Hum = max(Hum, StRu)
         return (StRu, Hum, Dr)

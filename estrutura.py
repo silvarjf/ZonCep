@@ -41,7 +41,7 @@ class ParamSimul():
         self.escoamentoSuperficial = 0 # Porcentagem
         self.mulch = 0.7
         self.RUSURF = 20 # Reserva Útil superficial
-        self.RESERVAUTIL = 100
+        self.CAD = 100
         self.tipoSolo = 1
         # self.anosDadosHistoricos = [ano for ano in range(1980, 2012)]
         self.anosDadosHistoricos = [2013]
