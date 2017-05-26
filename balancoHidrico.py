@@ -1,29 +1,55 @@
 from datetime import date, timedelta
-from estrutura import VariaveisBalHidrico, ParamSimul
+from estrutura import VariaveisBalHidrico, ParamSimul, VariaveisSaida
 from pyeto import deg2rad, daylight_hours, sunset_hour_angle, sol_dec
 from estacao import Estacao
 from cultura import Cultura
 import calculosDecendiais
 import numpy as np
-from pandas import DataFrame
 import pandas as pd
 
+# A classe balancoHidrico efetua os cálculos do balanço hídrico seguindo
+# o método Thornthwaite. A classe é inicializada com dados da Estação e
+# da cultura. O método simularBalancoHidrico() realiza os cálculos e retorna
+# um DataFrame com os valores diários das variáveis
 
-# Calculo dos ISNAS
+
 class balancoHidrico():
-    def __init__(self, estacao, cultura):
+    def __init__(self, cultura):
 
-        self.estacao = estacao
         self.cultura = cultura
         self.ETPsDecendiais = {}
         # self.valoresDiarios = {}
         self.columns = ['ETP', 'Esc', 'Apport', 'Kc', 'Evs', 'Hum', 'Dr', 'Vrad',
                         'StRurMax', 'Hr', 'Epc', 'Etr', 'Etm', 'Eps', 'StRur', 'StRuSurf',
-                        'StRu', 'TP', 'EtrEtm']
-        self.variaveisSaida = DataFrame(columns=self.columns)
+                        'StRu', 'TP', 'EtrEtm', 'fase']
+        self.variaveisSaida = VariaveisSaida(columns=self.columns)
 
 
-    # Calcular EtPs decendiais
+    def lerDadosMeteorologicos(self, estacao, parametros):
+        self.parametros = parametros
+        self.estacao = estacao
+
+        self.parametros.RESERVAUTIL = self.cultura.reservaUtilSolo[self.parametros.tipoSolo - 1]
+
+        self.dadosMeteorologicos = self.estacao.lerDadosMeteorologicos(self.parametros.anosDadosHistoricos)
+
+        if not self.dadosMeteorologicos.empty:
+            self.limitesDadosHistoricos = (self.dadosMeteorologicos.dropna(how='any').first_valid_index(),
+                                           self.dadosMeteorologicos.dropna(how='any').last_valid_index())
+            self.dadosMeteorologicos['irrigacao'] = 0
+
+
+            anosDisponiveis = [ano for ano in range(self.limitesDadosHistoricos[0].year, self.limitesDadosHistoricos[1].year + 1)]
+            if self.limitesDadosHistoricos[0].day > 1 or self.limitesDadosHistoricos[0].month > 1:
+                anosDisponiveis.remove(self.limitesDadosHistoricos[0].year)
+            if self.limitesDadosHistoricos[1].day < 31 or self.limitesDadosHistoricos[1].month < 11:
+                anosDisponiveis.remove(self.limitesDadosHistoricos[1].year)
+
+            self.ETPsDecendiais = self.etp_Thornthwaite([ano for ano in self.parametros.anosDadosHistoricos if ano in anosDisponiveis])
+
+
+
+    # Cálculo dos ETPs decendiais
     def etp_Thornthwaite(self, anosCalculoETP):
         latitudeRad = deg2rad(self.estacao.latitude)
 
@@ -31,6 +57,8 @@ class balancoHidrico():
         temperaturaDecendioAcc = np.array([]).reshape(12, 3, 0)
         ETPs = {}
 
+        # O ETP é calculado anualmente e o resultado final é a média desses cálculos
+        # anosCalculoETP grava os anos selecionados pelo usuário para o cálculo do ETP
         if anosCalculoETP:
             for ano in anosCalculoETP:
                 ### Calcula medias mensais e decendiais de temperatura para um ano ###
@@ -211,7 +239,7 @@ class balancoHidrico():
 
 
     ### Realiza os calculos do balanco hidrico com os dados especificados ###
-    def simularBalancoHidrico(self, parametros):
+    def simularBalancoHidrico(self, inicioSimulTuple, inicioPlantioTuple):
 
 
         def preSemeio(diaAtual, varDiaAnterior):
@@ -288,6 +316,8 @@ class balancoHidrico():
             varDiaAtual['StRu'] = max(varDiaAtual['StRu'] - varDiaAtual['Etr'], 0)
             varDiaAtual['EtrEtm'] = 100 * varDiaAtual['Etr'] / varDiaAtual['Etm']
 
+
+
             return varDiaAtual
 
         def posColheita(diaAtual, varDiaAnterior):
@@ -321,39 +351,24 @@ class balancoHidrico():
 
             return varDiaAtual
 
-        self.parametros = parametros
-
-        self.parametros.PROFMAXIMA = 10*self.cultura.reservaUtilSolo[self.parametros.tipoSolo - 1]
-        self.dadosMeteorologicos = self.estacao.lerDadosMeteorologicos(self.parametros.anosDadosHistoricos)
 
 
-        if not self.dadosMeteorologicos.empty:
-            self.limitesDadosHistoricos = (min(self.dadosMeteorologicos.index),
-                                           max(self.dadosMeteorologicos.index))
-            self.dadosMeteorologicos['irrigacao'] = 0
 
-
-            anosDisponiveis = [ano for ano in range(self.limitesDadosHistoricos[0].year, self.limitesDadosHistoricos[1].year + 1)]
-            if self.limitesDadosHistoricos[0].day > 1 or self.limitesDadosHistoricos[0].month > 1:
-                anosDisponiveis.remove(self.limitesDadosHistoricos[0].year)
-            if self.limitesDadosHistoricos[1].day < 31 or self.limitesDadosHistoricos[1].month < 11:
-                anosDisponiveis.remove(self.limitesDadosHistoricos[1].year)
-
-            self.ETPsDecendiais = self.etp_Thornthwaite([ano for ano in self.parametros.anosDadosHistoricos if ano in anosDisponiveis])
-
+        ## Começo da função balancoHidrico()
         if self.ETPsDecendiais:
 
             for ano in self.parametros.anosDadosHistoricos:
-                inicioSimul = date(ano, self.parametros.inicioSimul[0], self.parametros.inicioSimul[1])
-                fimSimul = date(ano, self.parametros.fimSimul[0], self.parametros.inicioSimul[1])
-                if fimSimul < inicioSimul:
-                    fimSimul.year += 1
+
+                inicioSimul = date(ano, inicioSimulTuple[0], inicioSimulTuple[1])
+                inicioPlantio = date(ano, inicioPlantioTuple[0], inicioPlantioTuple[1])
+                fimSimul = inicioPlantio
+                for fase in self.cultura.fases:
+                    fimSimul += timedelta(days=fase)
+                diaColheita = fimSimul - timedelta(days=1)
 
                 if inicioSimul >= self.limitesDadosHistoricos[0] and fimSimul <= self.limitesDadosHistoricos[1]:
 
                     diaAtual = inicioSimul
-                    inicioPlantio = date(ano, self.parametros.inicioPlantio[0], self.parametros.inicioPlantio[1])
-                    diaColheita = date(ano, self.parametros.diaColheita[0], self.parametros.diaColheita[1])
 
                     varDiaAnterior = VariaveisBalHidrico(self.parametros)
 
@@ -362,18 +377,28 @@ class balancoHidrico():
                     while diaAtual < inicioPlantio:
                         varDiaAtual = preSemeio(diaAtual, varDiaAnterior)
 
-                        a = DataFrame(varDiaAtual, index=[diaAtual], columns=self.columns)
 
-                        self.variaveisSaida = self.variaveisSaida.append(DataFrame(varDiaAtual, index=[diaAtual], columns=self.columns))
+                        self.variaveisSaida = self.variaveisSaida.append(VariaveisSaida(varDiaAtual, index=[diaAtual], columns=self.columns))
 
                         # self.valoresDiarios[ano][diaAtual] = varDiaAtual
                         diaAtual += timedelta(days=1)
                         varDiaAnterior = varDiaAtual
 
+
+
+                    fase = 1
+                    inicioFase = inicioPlantio
                     while diaAtual <= diaColheita:
                         varDiaAtual = fasesFenologicas(diaAtual, varDiaAnterior, inicioPlantio)
 
-                        self.variaveisSaida = self.variaveisSaida.append(DataFrame(varDiaAtual, index=[diaAtual], columns=self.columns))
+
+                        if diaAtual == inicioFase + timedelta(days=self.cultura.fases[fase - 1]):
+                            fase += 1
+                            inicioFase = diaAtual
+
+                        varDiaAtual['fase'] = fase
+
+                        self.variaveisSaida = self.variaveisSaida.append(VariaveisSaida(varDiaAtual, index=[diaAtual], columns=self.columns))
 
                         # self.valoresDiarios[ano][diaAtual] = varDiaAtual
                         diaAtual += timedelta(days=1)
@@ -382,7 +407,7 @@ class balancoHidrico():
                     while diaAtual < fimSimul:
                         varDiaAtual = posColheita(diaAtual, varDiaAnterior)
 
-                        self.variaveisSaida = self.variaveisSaida.append(DataFrame(varDiaAtual, index=[diaAtual], columns=self.columns))
+                        self.variaveisSaida = self.variaveisSaida.append(VariaveisSaida(varDiaAtual, index=[diaAtual], columns=self.columns))
 
                         # self.valoresDiarios[ano][diaAtual] = varDiaAtual
                         diaAtual += timedelta(days=1)
@@ -392,6 +417,7 @@ class balancoHidrico():
 
 
             if not self.variaveisSaida.empty:
+
                 return pd.concat([self.variaveisSaida, self.dadosMeteorologicos], axis = 1)
 
 
@@ -408,3 +434,4 @@ if __name__ == '__main__':
 
     simulacao = balancoHidrico(estacao, cultura)
     valoresDiarios = simulacao.simularBalancoHidrico(parametros)
+    a = 1
