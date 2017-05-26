@@ -4,7 +4,7 @@ class Cultura():
     def __init__(self):
         pass
 
-    def carregarDoBD(self, ID):
+    def carregarDoBD(self, grupoID):
         conn = sqlite3.connect('sarra.db')
         cursor = conn.cursor()
 
@@ -12,7 +12,7 @@ class Cultura():
         SELECT cultura.nome, configuracaoRegional.nomeConfiguracao, configuracaoRegional.estados,
                 grupo.nome, grupo.ciclo, configuracaoRegional.solo, grupo.tipo_kc, grupo.kc, configuracaoRegional.tipo_vrad, configuracaoRegional.vrad, grupo.fases
         FROM grupo, cultura, configuracaoRegional
-        WHERE grupo.ID = ? AND grupo.culturaRegiao = configuracaoRegional.id AND cultura.id = configuracaoRegional.culturaID''', (ID,))
+        WHERE grupo.ID = ? AND grupo.culturaRegiao = configuracaoRegional.id AND cultura.id = configuracaoRegional.culturaID''', (grupoID,))
 
         for linha in cursor.fetchall():
             self.culturaNome = linha[0]

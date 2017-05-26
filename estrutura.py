@@ -1,4 +1,5 @@
-
+from pandas import DataFrame
+from datetime import date, timedelta
 
 # Variáveis calculadas diariamente no balanço hídrico
 def VariaveisBalHidrico(parametros):
@@ -8,6 +9,7 @@ def VariaveisBalHidrico(parametros):
     varSaida['ETP'] = 0
     varSaida['Esc'] = 0
     varSaida['Apport'] = 0
+
     varSaida['Kc'] = 1
     varSaida['Evs'] = 0
     varSaida['Hum'] = parametros.ESTOQUEINICIAL
@@ -24,6 +26,7 @@ def VariaveisBalHidrico(parametros):
     varSaida['StRu'] = parametros.ESTOQUEINICIAL
     varSaida['TP'] = 0
     varSaida['EtrEtm'] = 0
+    varSaida['fase'] = 0
 
     return varSaida
 
@@ -34,16 +37,39 @@ class ParamSimul():
     def __init__(self):
         ### Valores default para as seguintes variaveis. O usuario pode alterar esses valores
         self.ESTOQUEINICIAL = 0
-        self.chuvaLimite = 30
+        self.chuvaLimite = 0 #30
         self.mulch = 0.7
-        self.RUSURF = 20
-        self.RESERVAUTIL = 200
+        self.RUSURF = 0 #20
+        self.RESERVAUTIL = 0
         self.tipoSolo = 1
         self.escoamentoSuperficial = 20
-        self.anosDadosHistoricos = [2011]
+        # self.anosDadosHistoricos = [ano for ano in range(1980, 2012)]
+        self.anosDadosHistoricos = [2013]
 
         ### As datas de plantio e colheita devem ser definidas pelo usuario
-        self.inicioSimul = (1, 1)
-        self.fimSimul = (12, 31)
-        self.inicioPlantio = (1, 6)
-        self.diaColheita = (4, 15)
+        # self.inicioSimul = (1, 1)
+        # # self.fimSimul = (12, 31)
+        # self.inicioPlantio = (1, 6)
+        # self.diaColheita = (4, 15)
+
+class VariaveisSaida(DataFrame):
+    def calcularMedia(self, variaveis, cultura, paramSimul, inicioPlantioTuple, estacao, tipoPeriodo, periodo):
+        # A variável tipoPeriodo pode ter o valor de 'fase' ou 'mes'
+        # Para o valor 'fase', a variável período guarda o número da fase para a qual deve-se calcular a média
+        limitesDadosHistoricos = (min(self.index), max(self.index))
+        medias = DataFrame(columns=variaveis)
+
+        if tipoPeriodo == 'fase':
+
+            for ano in list(set(range(limitesDadosHistoricos[0].year, limitesDadosHistoricos[1].year + 1)) & set(paramSimul.anosDadosHistoricos)):
+                inicioPlantio = date(ano, inicioPlantioTuple[0], inicioPlantioTuple[1])
+                inicioPeriodo = inicioPlantio
+                fimPeriodo = inicioPeriodo + timedelta(days=cultura.fases[0] - 1)
+
+                for i in range(periodo - 1):
+                    inicioPeriodo += timedelta(days=cultura.fases[i])
+                    fimPeriodo += timedelta(days=cultura.fases[i+1])
+
+                medias = medias.append(DataFrame(self[variaveis].loc[inicioPeriodo:fimPeriodo].mean(), columns=[ano]).T)
+
+            return DataFrame(medias.mean(), columns=[estacao.codigo]).T

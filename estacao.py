@@ -1,6 +1,6 @@
 import csv, datetime, sqlite3
-from pandas import Series, DataFrame
 import pandas as pd
+from estrutura import VariaveisSaida
 
 
 
@@ -75,7 +75,7 @@ class Estacao():
 
     def lerDadosMeteorologicos(self, anosLista):
 
-        dadosMeteorologicos = DataFrame(columns=[self.keys[x] for x in self.usedKeys], index=[])
+        dadosMeteorologicos = VariaveisSaida(columns=[self.keys[x] for x in self.usedKeys], index=[])
         precipitacao = {}
         temperatura = {}
 
@@ -101,7 +101,7 @@ class Estacao():
 
                         precipitacao[data] = None if linha['prec'] == '' else float(linha['prec'].replace(',', '.'))
                         temperatura[data] = None if linha['tmed'] == '' else float(linha['tmed'].replace(',', '.'))
-                        dadosMeteorologicos = dadosMeteorologicos.append(DataFrame(linha, columns=[self.keys[x] for x in self.usedKeys], index=[data]))
+                        dadosMeteorologicos = dadosMeteorologicos.append(VariaveisSaida(linha, columns=[self.keys[x] for x in self.usedKeys], index=[data]))
 
 
                 else:
@@ -116,8 +116,19 @@ class Estacao():
             dadosMeteorologicos[indexes] = \
                 dadosMeteorologicos[indexes].apply(pd.to_numeric, errors='coerce')
 
-
-            return dadosMeteorologicos
+            # dadosMeteorologicos = dadosMeteorologicos.dropna('index', 'all')
+            if dadosMeteorologicos.empty:
+                return dadosMeteorologicos
+            else:
+                a = dadosMeteorologicos.first_valid_index()
+                b = dadosMeteorologicos.last_valid_index()
+                if a >= b:
+                    idx = [b + datetime.timedelta(days=c) for c in range((a-b).days + 1)]
+                else:
+                    idx = [a + datetime.timedelta(days=c) for c in range((b-a).days + 1)]
+                dadosMeteorologicos = dadosMeteorologicos.reindex(idx)
+                dadosMeteorologicos.interpolate()
+                return dadosMeteorologicos
 
 
 if __name__ == '__main__':
