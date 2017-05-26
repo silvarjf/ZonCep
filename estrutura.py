@@ -38,11 +38,11 @@ class ParamSimul():
         ### Valores default para as seguintes variaveis. O usuario pode alterar esses valores
         self.ESTOQUEINICIAL = 0
         self.chuvaLimite = 0 #30
+        self.escoamentoSuperficial = 0 # Porcentagem
         self.mulch = 0.7
-        self.RUSURF = 20
+        self.RUSURF = 20 # Reserva Útil superficial
         self.RESERVAUTIL = 100
         self.tipoSolo = 1
-        self.escoamentoSuperficial = 0
         # self.anosDadosHistoricos = [ano for ano in range(1980, 2012)]
         self.anosDadosHistoricos = [2013]
 
