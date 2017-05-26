@@ -39,10 +39,10 @@ class ParamSimul():
         self.ESTOQUEINICIAL = 0
         self.chuvaLimite = 0 #30
         self.mulch = 0.7
-        self.RUSURF = 0 #20
-        self.RESERVAUTIL = 0
+        self.RUSURF = 20
+        self.RESERVAUTIL = 100
         self.tipoSolo = 1
-        self.escoamentoSuperficial = 20
+        self.escoamentoSuperficial = 0
         # self.anosDadosHistoricos = [ano for ano in range(1980, 2012)]
         self.anosDadosHistoricos = [2013]
 

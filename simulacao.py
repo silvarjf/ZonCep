@@ -19,8 +19,7 @@ variaveis = ['EtrEtm']
 mediasDF = DataFrame(columns=['latitude', 'longitude'] + variaveis)
 parametros = ParamSimul()
 parametros.chuvaLimite = 30
-parametros.RUSURF = 20
-parametros.PROFMAXIMA = 300
+parametros.escoamentoSuperficial = 20
 
 # Selecionar cultura
 cultura = Cultura()
