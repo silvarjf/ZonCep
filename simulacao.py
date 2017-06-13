@@ -49,6 +49,7 @@ for linha in cursor.fetchall():
 ########
 
 valoresDiarios = {}
+balancoHidricoNormal = {}
 
 
 
@@ -65,7 +66,7 @@ for estacao in estacoes:
     # else:
     simulacao = balancoHidrico(cultura)
     simulacao.lerDadosMeteorologicos(estacao, parametros)
-    valoresDiarios[estacao.codigo] = simulacao.simularBalancoHidrico(inicioSimul, inicioPlantio)
+    (valoresDiarios[estacao.codigo], balancoHidricoNormal[estacao.codigo]) = simulacao.simularBalancoHidrico(inicioSimul, inicioPlantio)
     valoresDiarios['latitude'] = estacao.latitude
     valoresDiarios['longitude'] = estacao.longitude
     medias = {}
@@ -74,6 +75,7 @@ for estacao in estacoes:
 
     if not isinstance(valoresDiarios[estacao.codigo], str):
         valoresDiarios[estacao.codigo].to_csv(enderecoSaida + str(estacao.codigo) + '.csv')
+        balancoHidricoNormal[estacao.codigo].to_csv(enderecoSaida + str(estacao.codigo) + 'BHN.csv')
         # medias['media'] = valoresDiarios[estacao.codigo].calcularMedia(variaveis, cultura, parametros, inicioPlantio, estacao, 'fase', 3)
     # else:
     #     medias['media'] = DataFrame(columns=variaveis)

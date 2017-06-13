@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 # A classe balancoHidrico efetua os cálculos do balanço hídrico seguindo
-# o método Thornthwaite. A classe é inicializada com dados da Estação e
+# o modelo SARRA. A classe é inicializada com dados da Estação e
 # da cultura. O método simularBalancoHidrico() realiza os cálculos e retorna
 # um DataFrame com os valores diários das variáveis
 
@@ -245,8 +245,128 @@ class balancoHidrico():
 
         return Etr, Etm, TP
 
+    def encontrarEstacaoUmida(self, P_ETP):
+        mesAtual = 0
+        mesInicio = 0
+        mesFim = 0
+        melhorMesInicio = 0
+        melhorMesFim = 0
+        melhorAcc = 0
+        P_ETP_Acc = 0
+        while 1:
+            if P_ETP[mesAtual % 12] >= 0:
+                P_ETP_Acc = P_ETP_Acc + P_ETP[mesAtual % 12]
+                mesFim = mesAtual
 
-    ### Realiza os calculos do balanco hidrico com os dados especificados ###
+                if mesAtual == mesInicio + 12:
+                    break
+
+            else:
+                if P_ETP_Acc > melhorAcc:
+                    melhorMesInicio = mesInicio
+                    melhorMesFim = mesFim
+                    melhorAcc = P_ETP_Acc
+
+                P_ETP_Acc = 0
+                mesInicio = mesAtual + 1
+
+                if mesInicio > 11:
+                    break
+
+            mesAtual = (mesAtual + 1)
+
+        melhorMesFim = melhorMesFim % 12
+
+        return (melhorMesInicio + 1, melhorMesFim + 1)
+
+
+    def balancoHidricoNormal(self):
+        balancoHidricoNormalDF = self.dadosMeteorologicos
+        balancoHidricoNormalDF.index = pd.to_datetime(balancoHidricoNormalDF.index)
+
+        balancoHidricoNormalDF['ano'] = balancoHidricoNormalDF.index.year
+        balancoHidricoNormalDF['mes'] = balancoHidricoNormalDF.index.month
+
+        balancoHidricoNormalDF = balancoHidricoNormalDF.groupby(['ano', 'mes']).aggregate({'prec': np.sum, 'mes': np.mean}).groupby(['mes']).aggregate(
+            {'prec': np.mean})
+
+        ETPMensal = {}
+
+        for mes in range(1, 13):
+            ETPMensal[mes] = self.ETPsDecendiais[(mes, 1)] + self.ETPsDecendiais[(mes, 2)] + self.ETPsDecendiais[(mes, 3)]
+
+        balancoHidricoNormalDF = pd.concat([balancoHidricoNormalDF, pd.Series(ETPMensal, name='ETP')], axis=1)
+        balancoHidricoNormalDF['P - ETP'] = balancoHidricoNormalDF['prec'] - balancoHidricoNormalDF['ETP']
+
+        # Encontrar o último mês da estação seca
+        (inicioEstacaoUmida, fimEstacaoUmida) = self.encontrarEstacaoUmida(balancoHidricoNormalDF['P - ETP'].tolist())
+        balancoHidricoNormalDF['ARM'] = 0
+        balancoHidricoNormalDF['Neg'] = 0
+        balancoHidricoNormalDF['Alt'] = 0
+        balancoHidricoNormalDF['Etr'] = 0
+        balancoHidricoNormalDF['Def'] = 0
+        balancoHidricoNormalDF['Exc'] = 0
+
+
+        # Inicializar o BH
+        if (np.sum(balancoHidricoNormalDF['P - ETP']) >= 0) or \
+                (np.sum(balancoHidricoNormalDF['P - ETP']) < 0 and \
+                         np.sum(balancoHidricoNormalDF.loc[balancoHidricoNormalDF['P - ETP'] > 0, 'P - ETP']) >= self.parametros.CAD):
+            balancoHidricoNormalDF.loc[fimEstacaoUmida, 'ARM'] = self.parametros.CAD
+        else:
+            balancoHidricoNormalDF.loc[fimEstacaoUmida, 'Neg'] = self.parametros.CAD*np.log((np.sum(balancoHidricoNormalDF.loc[balancoHidricoNormalDF['P - ETP'] > 0, 'P - ETP'])/self.parametros.CAD)/ \
+                  (1 - np.exp(np.sum(balancoHidricoNormalDF.loc[balancoHidricoNormalDF['P - ETP'] < 0, 'P - ETP'])/self.parametros.CAD)))
+
+            balancoHidricoNormalDF.loc[fimEstacaoUmida, 'ARM'] = self.parametros.CAD*np.exp(balancoHidricoNormalDF['Neg'][fimEstacaoUmida]/self.parametros.CAD)
+
+        for mes in range(fimEstacaoUmida + 1, fimEstacaoUmida + 13):
+            if mes <= 12:
+                mesAtual = mes
+                mesAnterior = mesAtual - 1
+            else:
+                mesAtual = mes % 12
+
+                if mesAtual == 1:
+                    mesAnterior = 12
+                else:
+                    mesAnterior = mesAtual - 1
+
+            if balancoHidricoNormalDF['P - ETP'][mesAtual] < 0:
+                balancoHidricoNormalDF.loc[mesAtual, 'Neg'] = balancoHidricoNormalDF['Neg'][mesAnterior] + \
+                                                              balancoHidricoNormalDF['P - ETP'][mesAtual]
+                balancoHidricoNormalDF.loc[mesAtual, 'ARM'] = self.parametros.CAD * np.exp(
+                    balancoHidricoNormalDF['Neg'][mesAtual] / self.parametros.CAD)
+
+            else:
+                balancoHidricoNormalDF.loc[mesAtual, 'ARM'] = min(
+                    balancoHidricoNormalDF['ARM'][mesAnterior] + balancoHidricoNormalDF['P - ETP'][mesAtual], self.parametros.CAD)
+                balancoHidricoNormalDF.loc[mesAtual, 'Neg'] = self.parametros.CAD * np.log(
+                    balancoHidricoNormalDF['ARM'][mesAtual] / self.parametros.CAD)
+
+            balancoHidricoNormalDF.loc[mesAtual, 'Alt'] = balancoHidricoNormalDF['ARM'][mesAtual] - \
+                                                          balancoHidricoNormalDF['ARM'][mesAnterior]
+
+            if balancoHidricoNormalDF['P - ETP'][mesAtual] >= 0:
+                balancoHidricoNormalDF.loc[mesAtual, 'Etr'] = balancoHidricoNormalDF['ETP'][mesAtual]
+            else:
+                balancoHidricoNormalDF.loc[mesAtual, 'Etr'] = balancoHidricoNormalDF['prec'][mesAtual] + abs(
+                    balancoHidricoNormalDF['Alt'][mesAtual])
+
+            balancoHidricoNormalDF.loc[mesAtual, 'Def'] = balancoHidricoNormalDF['ETP'][mesAtual] - \
+                                                          balancoHidricoNormalDF['Etr'][mesAtual]
+
+            if balancoHidricoNormalDF['ARM'][mesAtual] == self.parametros.CAD:
+                balancoHidricoNormalDF.loc[mesAtual, 'Exc'] = balancoHidricoNormalDF['P - ETP'][mesAtual] - \
+                                                              balancoHidricoNormalDF['Alt'][mesAtual]
+
+        return balancoHidricoNormalDF
+
+
+
+
+
+
+                ### Realiza os calculos do balanco hidrico com os dados especificados ###
     def simularBalancoHidrico(self, inicioSimulTuple, inicioPlantioTuple):
 
 
@@ -362,6 +482,7 @@ class balancoHidrico():
 
 
 
+
         ## Começo da função balancoHidrico()
         if self.ETPsDecendiais:
 
@@ -370,8 +491,10 @@ class balancoHidrico():
                 inicioSimul = date(ano, inicioSimulTuple[0], inicioSimulTuple[1])
                 inicioPlantio = date(ano, inicioPlantioTuple[0], inicioPlantioTuple[1])
                 fimSimul = inicioPlantio
+
                 for fase in self.cultura.fases:
                     fimSimul += timedelta(days=fase)
+
                 diaColheita = fimSimul - timedelta(days=1)
 
                 if inicioSimul >= self.limitesDadosHistoricos[0] and fimSimul <= self.limitesDadosHistoricos[1]:
@@ -384,7 +507,6 @@ class balancoHidrico():
 
                     while diaAtual < inicioPlantio:
                         varDiaAtual = preSemeio(diaAtual, varDiaAnterior)
-
 
                         self.variaveisSaida = self.variaveisSaida.append(VariaveisSaida(varDiaAtual, index=[diaAtual], columns=self.columns))
 
@@ -423,10 +545,13 @@ class balancoHidrico():
 
 
 
+            self.balancoHidricoNormalDF = self.balancoHidricoNormal()
+
+
 
             if not self.variaveisSaida.empty:
 
-                return pd.concat([self.variaveisSaida, self.dadosMeteorologicos], axis = 1)
+                return (pd.concat([self.variaveisSaida, self.dadosMeteorologicos], axis = 1), self.balancoHidricoNormalDF)
 
 
         return 'Dados insuficientes'
