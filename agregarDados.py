@@ -4,9 +4,9 @@ import numpy as np
 from pandas import DataFrame, Series
 import sqlite3
 
-def agregarDados(variaveis, tipoPeriodo, periodo):
+def agregarDados(variaveis, tipoFiltro, periodoFiltro = None):
     
-    caminho = 'simulacoes/Algodão/BA/'
+    caminho = 'simulacoes/Algodão/MG/'
 
     conn = sqlite3.connect('sarra.db')
     cursor = conn.cursor()
@@ -37,8 +37,15 @@ def agregarDados(variaveis, tipoPeriodo, periodo):
             dados['ano'] = dados.index.year
 
             for variavel in variaveis:
-                agregado = dados.ix[dados[tipoPeriodo] == periodo][[variavel, 'ano']]
-                agregado = agregado.groupby(['ano']).aggregate({variavel: np.mean})
+                agregado = dados
+
+                if periodoFiltro is not None:
+                    agregado = agregado.ix[agregado[tipoFiltro] == periodoFiltro][[variavel, 'ano']]
+
+                if variavel == 'prec':
+                    agregado = agregado.groupby(['ano']).aggregate({variavel: np.sum})
+                else:
+                    agregado = agregado.groupby(['ano']).aggregate({variavel: np.mean})
 
 
                 estacaoSeries = estacaoSeries.append(np.mean(agregado))
@@ -54,4 +61,4 @@ def agregarDados(variaveis, tipoPeriodo, periodo):
 
 
 if __name__ == '__main__':
-    agregarDados(['EtrEtm'], 'fase', 3)
+    agregarDados(['prec'], 'ano')
