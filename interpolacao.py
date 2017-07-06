@@ -6,6 +6,7 @@ from matplotlib.patches import PathPatch
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from interpolacaoIDW import interpolacaoIDW
 from scipy.interpolate import griddata
 
 def interpolar(estado, latitudesConhecidas, valoresConhecidos, labels, resolucao = 20000):
@@ -46,9 +47,8 @@ def interpolar(estado, latitudesConhecidas, valoresConhecidos, labels, resolucao
         ponto = m(latitudesConhecidas['longitude'][indice], latitudesConhecidas['latitude'][indice])
         pontosConhecidos = pontosConhecidos.append({'X': ponto[0], 'Y': ponto[1]},ignore_index=True)
 
-    zGrid1 = griddata(pontosConhecidos, valoresConhecidos, (xGrid, yGrid), method='linear')
-    zGrid2 = griddata(pontosConhecidos, valoresConhecidos, (xGrid, yGrid), method='nearest')
-    zGrid3 = griddata(pontosConhecidos, valoresConhecidos, (xGrid, yGrid), method='cubic')
+    # zGrid2 = griddata(pontosConhecidos, valoresConhecidos, (xGrid, yGrid), method='nearest')
+    zGrid4 = interpolacaoIDW(pontosConhecidos, valoresConhecidos, xGrid, yGrid, metodo='linear', raioDeInfluencia=150)
 
 
 
@@ -78,8 +78,9 @@ def interpolar(estado, latitudesConhecidas, valoresConhecidos, labels, resolucao
 
     # clevs = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     # clevs = [30, 40, 45, 55, 60, 70, 80, 90, 100]
-    clevs = [0, 45, 55, 100]
-    cs = m.contourf(xGrid, yGrid, zGrid2, clevs, cmap=plt.cm.RdYlBu)
+    clevs = [693,990,1140,1230,1315,1390,1520,1865]
+    # clevs = [0, 45, 55, 100]
+    cs = m.contourf(xGrid, yGrid, zGrid4, clevs, cmap=plt.cm.RdYlBu)
     # for contour in cs.collections:
     #     contour.set_clip_path(clip)
     m.scatter(pontosConhecidos['X'], pontosConhecidos['Y'],3, color = 'k',picker = True )
@@ -89,17 +90,20 @@ def interpolar(estado, latitudesConhecidas, valoresConhecidos, labels, resolucao
 
     def pickEstacao(event):
         ind = event.ind
-        print(labels[ind][0])
+        # print(labels[ind][0])
+        print(labels.iloc[ind])
 
     fig.canvas.mpl_connect('pick_event', pickEstacao)
     plt.show()
 
 if __name__ == '__main__':
-    estado = 'BA'
+    estado = 'MG'
 
-    mediasDF = pd.read_csv('simulacoes/Algodão/' + estado + '/EtrEtmmedias.csv',index_col=0)
+    variavel = 'prec'
+    # mediasDF = pd.read_csv('simulacoes/Algodão/' + estado + '/EtrEtmmedias.csv',index_col=0)
+    mediasDF = pd.read_csv('simulacoes/Algodão/' + estado + '/' + variavel + 'medias.csv', index_col=0)
 
 
     mediasDF = mediasDF.dropna()
-    interpolar(estado, mediasDF[['latitude', 'longitude']], mediasDF['EtrEtm'], mediasDF.index)
+    interpolar(estado, mediasDF[['latitude', 'longitude']], mediasDF[variavel], mediasDF[variavel])
 
