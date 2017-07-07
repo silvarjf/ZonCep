@@ -4,7 +4,7 @@ import sqlite3
 
 from pandas import DataFrame
 
-from balancoHidrico import balancoHidrico
+from calculos.balancoHidrico import balancoHidrico
 from calculos.cultura import Cultura
 from calculos.estacao import Estacao
 from calculos.estrutura import ParamSimul
