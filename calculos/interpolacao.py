@@ -1,13 +1,12 @@
 import sqlite3
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import shapefile
 from mpl_toolkits.basemap import Basemap
-from matplotlib.path import Path
-from matplotlib.patches import PathPatch
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-from interpolacaoIDW import interpolacaoIDW
-from scipy.interpolate import griddata
+from calculos.interpolacaoIDW import interpolacaoIDW
+
 
 def interpolar(estado, latitudesConhecidas, valoresConhecidos, labels, resolucao = 20000):
 
