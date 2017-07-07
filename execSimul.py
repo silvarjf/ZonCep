@@ -97,7 +97,7 @@ def simular(estado,inisim,dataplantio,tiposolo,idgrupo,estoqueini,chuvalimite,mu
 
         if not isinstance(valoresDiarios[estacao.codigo], str):
             valoresDiarios[estacao.codigo].to_csv(enderecoSaida + str(estacao.codigo) + '.csv')
-	    balancoHidricoNormal[estacao.codigo].to_csv(enderecoSaida + str(estacao.codigo) + 'BHN.csv')
+            balancoHidricoNormal[estacao.codigo].to_csv(enderecoSaida + str(estacao.codigo) + 'BHN.csv')
             # medias['media'] = valoresDiarios[estacao.codigo].calcularMedia(variaveis, cultura, parametros, inicioPlantio, estacao, 'fase', 3)
         # else:
         #     medias['media'] = DataFrame(columns=variaveis)

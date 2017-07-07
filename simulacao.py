@@ -1,90 +1,127 @@
-import sqlite3, csv, os.path
-from estacao import Estacao
-from cultura import Cultura
-from estrutura import ParamSimul, VariaveisSaida
-from balancoHidrico import balancoHidrico
-from pandas import DataFrame
-import pandas as pd
 
+from PyQt5.uic import loadUiType
+from PyQt5 import QtCore, QtGui, QtWidgets
+import subprocess
+import sys
+import execSimul
+import sqlite3, pickle
 
-#### Parâmetros a serem definidos pelo usuário
-estado = 'AC'
+### Interface para disparar simulações ###
 
-# Datas
-inicioSimul = (1,1)
-inicioPlantio = (1, 1)
+Ui_MainWindow, QMainWindow = loadUiType('menuqt.ui')
 
-
-variaveis = ['EtrEtm']
-mediasDF = DataFrame(columns=['latitude', 'longitude'] + variaveis)
-parametros = ParamSimul()
-parametros.chuvaLimite = 30
-parametros.escoamentoSuperficial = 20
-
-# Selecionar cultura
-cultura = Cultura()
-cultura.carregarDoBD(25)
-
-enderecoSaida = 'simulacoes/' + cultura.culturaNome + '/' + estado + '/'
-
-if not os.path.exists(enderecoSaida):
-    os.makedirs(enderecoSaida)
-
-
-#### Selecionar todos as estações de um estado
+tipossolo = ['1','2','3']
+anos = list()
 conn = sqlite3.connect('sarra.db')
 cursor = conn.cursor()
 
+
+# Carregar culturas e estados
 cursor.execute('''
-SELECT estacao.codigo, estacao.nome, estacao.latitude, estacao.longitude,
-estacao.altitude, estacao.municipio, municipio.nome, municipio.estado, estado.nome, estacao.dados
-FROM estacao, municipio, estado
-WHERE municipio.codigo = estacao.municipio AND municipio.estado = estado.sigla AND estado.sigla = "%s"''' % (estado))
+SELECT cultura.nome, configuracaoRegional.nomeConfiguracao, configuracaoRegional.id, grupo.nome, grupo.ID
+FROM cultura, configuracaoRegional, grupo
+WHERE cultura.id = configuracaoRegional.culturaID
+AND configuracaoRegional.id = grupo.culturaRegiao
+''')
 
-estacoes = []
+tuplas = cursor.fetchall()
 
-for linha in cursor.fetchall():
-    estacoes.append(Estacao(cursorSQL=linha))
+cursor.execute('''
+SELECT estado.sigla
+FROM estado
+''')
+estados = cursor.fetchall()
+estadotmp = list()
+for estado in estados:
+    estadotmp.append(estado[0])
+estados = estadotmp
 
-########
+class MainWindow(QMainWindow, Ui_MainWindow):
+    def __init__(self, ):
+        super(MainWindow, self).__init__()
+        self.setupUi(self)
+        self.btnSimular.clicked.connect(self.simular)
+        self.btnAnos.clicked.connect(self.anoswindow)
+        self.btnAddAno.clicked.connect(self.adicionaano)
+        self.btnRmAno.clicked.connect(self.removeano)
+        self.btnFechadock.clicked.connect(self.escondedock)
+        self.cboxCultura.currentIndexChanged.connect(self.carregaConfReg)
+        self.dwAnos.hide()
+        self.cboxEstado.clear()
+        self.cboxEstado.addItems(estados)
+        self.cboxSolo.clear()
+        self.cboxSolo.addItems(tipossolo)
+        self.cboxConfReg.clear()
+        self.cboxGrupo.clear()
+        self.cboxConfReg.currentIndexChanged.connect(self.carregaGrupo)
+        culturas = {tupla[0] for tupla in tuplas}
+        self.cboxCultura.addItems(culturas)
 
-valoresDiarios = {}
-balancoHidricoNormal = {}
+    def simular(self):
+        #print("simulando")
+        #subprocess.Popen("python intersarra.py", shell=True)
+        estado = str(self.cboxEstado.currentText())
+        inisim = str(self.dteIniSim.date().toPyDate())
+        dataplantio = str(self.dtePlantio.date().toPyDate())
+        tiposolo = str(self.cboxSolo.currentText())
+        tipocultura = str(self.cboxCultura.currentText())
+        confregional = str(self.cboxConfReg.currentText())
+        estoqueini = str(self.sbEstoqueInicial.value())
+        chuvalimite = str(self.sbChuvaLimite.value())
+        mulch = str(self.sbMulch.value())
+        rusurf = str(self.sbRUSURF.value())
+        resutil = str(self.sbReservaUtil.value())
+        escsup = str(self.sbEscoamentoSup.value())
+        for tupla in tuplas:
+            if tupla[0] == self.cboxCultura.currentText() and tupla[1] == self.cboxConfReg.currentText() and tupla[3] == self.cboxGrupo.currentText():
+                idgrupo = tupla[4]
+
+        execSimul.simular(estado, inisim, dataplantio, tiposolo, idgrupo, estoqueini, chuvalimite, mulch, rusurf, resutil, escsup, anos)
+        #QtCore.QCoreApplication.instance().quit()
+
+    def carregaConfReg(self):
+        self.cboxConfReg.clear()
+        confreglist = []
+        for tupla in tuplas:
+            if tupla[0] == self.cboxCultura.currentText():
+                confreglist.append(tupla[1])
+        confreglist = set(confreglist)
+        self.cboxConfReg.addItems(confreglist)
+
+    def carregaGrupo(self):
+        self.cboxGrupo.clear()
+        grupolist = []
+        for tupla in tuplas:
+            if tupla[1] == self.cboxConfReg.currentText():
+                grupolist.append(tupla[3])
+        grupolist = set(grupolist)
+        self.cboxGrupo.addItems(grupolist)
+
+    def anoswindow(self):
+        isVis = self.dwAnos.isVisible()
+        if(isVis == True):
+            self.dwAnos.hide()
+        else:
+            self.dwAnos.show()
+            self.dwAnos.move(self.btnAnos.mapToGlobal(QtCore.QPoint(30,30)))
+
+    def adicionaano(self):
+        self.lvAnos.addItem(str(self.sbAnos.value()))
+        anos.append(str(self.sbAnos.value()))
+
+    def removeano(self):
+            if(len(self.lvAnos.selectedIndexes()) > 0):
+                item = self.lvAnos.currentItem()
+                value = item.text()
+                anos.remove(str(value))
+                self.lvAnos.takeItem(self.lvAnos.currentRow())
 
 
+    def escondedock(self):
+        self.dwAnos.hide()
 
-
-# estacoes = estacoes[-4:]
-
-nEstacoes = len(estacoes)
-n = 1
-
-for estacao in estacoes:
-    print(estacao.nome + ': ' + str(n) + ' de ' + str(nEstacoes))
-    # if os.path.isfile(endereco + str(estacao.codigo) + '.csv'):
-    #     valoresDiarios[estacao.codigo] = pd.read_csv(endereco + str(estacao.codigo) + '.csv')
-    # else:
-    simulacao = balancoHidrico(cultura)
-    simulacao.lerDadosMeteorologicos(estacao, parametros)
-    (valoresDiarios[estacao.codigo], balancoHidricoNormal[estacao.codigo]) = simulacao.simularBalancoHidrico(inicioSimul, inicioPlantio)
-    valoresDiarios['latitude'] = estacao.latitude
-    valoresDiarios['longitude'] = estacao.longitude
-    medias = {}
-    medias['latitude'] = estacao.latitude
-    medias['longitude'] = estacao.longitude
-
-    if not isinstance(valoresDiarios[estacao.codigo], str):
-        valoresDiarios[estacao.codigo].to_csv(enderecoSaida + str(estacao.codigo) + '.csv')
-        balancoHidricoNormal[estacao.codigo].to_csv(enderecoSaida + str(estacao.codigo) + 'BHN.csv')
-        # medias['media'] = valoresDiarios[estacao.codigo].calcularMedia(variaveis, cultura, parametros, inicioPlantio, estacao, 'fase', 3)
-    # else:
-    #     medias['media'] = DataFrame(columns=variaveis)
-
-    # pd.concat([mediasDF, DataFrame(medias['media'], index=[estacao.codigo])], axis = 1)
-    # a = pd.concat([DataFrame(medias, columns=['latitude', 'longitude'], index), medias['media']], axis=1)
-    # mediasDF = mediasDF.append(pd.concat([DataFrame(medias, columns=['latitude', 'longitude'], index=[estacao.codigo]), medias['media']], axis=1))
-    n+=1
-# mediasDF.to_csv(enderecoSaida + 'Medias.csv')
-
-
-
+if __name__ == '__main__':
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = MainWindow()
+    MainWindow.show()
+    sys.exit(app.exec_())
