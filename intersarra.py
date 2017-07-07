@@ -13,7 +13,7 @@ import sys
 import numpy as np
 Ui_MainWindow, QMainWindow = loadUiType('sarraqt.ui')
 
-dirculturassimuladas = "/home/daniel/Desktop/tcc/novoSarra/simulacoes"
+dirculturassimuladas = 'simulacoes/'
 
 def drawstates():
     shapefile='/home/daniel/Desktop/tcc/shapeSP/shapeestado'
@@ -34,7 +34,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.cboxCultura.clear()
         self.cboxEstado.clear()
-        root, dirs, files = os.walk(dirculturassimuladas).next()
+        root, dirs, files = next(os.walk(dirculturassimuladas))
         self.cboxCultura.addItems(dirs)
         self.cboxCultura.currentIndexChanged.connect(self.carregaEstados)
         self.cboxEstado.currentIndexChanged.connect(self.carregaShape)
