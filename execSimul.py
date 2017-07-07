@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
-import sqlite3, csv, os.path
-from estacao import Estacao
-from cultura import Cultura
-from estrutura import ParamSimul, VariaveisSaida
-from balancoHidrico import balancoHidrico
+import os.path
+import sqlite3
+
 from pandas import DataFrame
-import pandas as pd
+
+from balancoHidrico import balancoHidrico
+from calculos.estrutura import ParamSimul
+from cultura import Cultura
+from estacao import Estacao
+
 
 def simular(estado,inisim,dataplantio,tiposolo,idgrupo,estoqueini,chuvalimite,mulch,rusurf,cad,escsup,anos):
     #### Parâmetros a serem definidos pelo usuário

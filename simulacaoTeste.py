@@ -1,11 +1,12 @@
-import sqlite3, csv, os.path
-from estacao import Estacao
-from cultura import Cultura
-from estrutura import ParamSimul, VariaveisSaida
-from balancoHidrico import balancoHidrico
-from pandas import DataFrame
-import pandas as pd
+import os.path
+import sqlite3
 
+from pandas import DataFrame
+
+from balancoHidrico import balancoHidrico
+from calculos.estrutura import ParamSimul
+from cultura import Cultura
+from estacao import Estacao
 
 #### Parâmetros a serem definidos pelo usuário
 estado = 'AC'

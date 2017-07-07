@@ -1,11 +1,14 @@
 from datetime import date, timedelta
-from estrutura import VariaveisBalHidrico, ParamSimul, VariaveisSaida
-from pyeto import deg2rad, daylight_hours, sunset_hour_angle, sol_dec
-from estacao import Estacao
-from cultura import Cultura
-import calculosDecendiais
+
 import numpy as np
 import pandas as pd
+from pyeto import deg2rad, daylight_hours, sunset_hour_angle, sol_dec
+
+import calculosDecendiais
+from calculos.estrutura import VariaveisBalHidrico, ParamSimul, VariaveisSaida
+from cultura import Cultura
+from estacao import Estacao
+
 
 # A classe balancoHidrico efetua os cálculos do balanço hídrico seguindo
 # o modelo SARRA. A classe é inicializada com dados da Estação e

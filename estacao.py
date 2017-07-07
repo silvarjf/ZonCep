@@ -1,7 +1,9 @@
-import csv, datetime, sqlite3
-import pandas as pd
-from estrutura import VariaveisSaida
+import csv
+import datetime
 
+import pandas as pd
+
+from calculos.estrutura import VariaveisSaida
 
 
 class Estacao():
