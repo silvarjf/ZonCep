@@ -6,8 +6,8 @@ from pyeto import deg2rad, daylight_hours, sunset_hour_angle, sol_dec
 
 from calculos import calculosDecendiais
 from calculos.cultura import Cultura
+from calculos.estacao import Estacao
 from calculos.estrutura import VariaveisBalHidrico, ParamSimul, VariaveisSaida
-from estacao import Estacao
 
 
 # A classe balancoHidrico efetua os cálculos do balanço hídrico seguindo

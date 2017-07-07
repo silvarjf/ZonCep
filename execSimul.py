@@ -6,8 +6,8 @@ from pandas import DataFrame
 
 from balancoHidrico import balancoHidrico
 from calculos.cultura import Cultura
+from calculos.estacao import Estacao
 from calculos.estrutura import ParamSimul
-from estacao import Estacao
 
 
 def simular(estado,inisim,dataplantio,tiposolo,idgrupo,estoqueini,chuvalimite,mulch,rusurf,cad,escsup,anos):
