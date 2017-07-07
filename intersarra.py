@@ -11,7 +11,7 @@ import subprocess
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 import numpy as np
-Ui_MainWindow, QMainWindow = loadUiType('sarraqt.ui')
+Ui_MainWindow, QMainWindow = loadUiType('interfaces/sarraqt.ui')
 
 dirculturassimuladas = 'simulacoes/'
 
