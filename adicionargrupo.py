@@ -1,8 +1,13 @@
-import sys, sqlite3
-from PyQt5.QtWidgets import QDialog, QApplication, QDialogButtonBox, QItemDelegate, QSpinBox, QDoubleSpinBox, QTableWidgetItem, QShortcut
+import sqlite3
+import sys
+from PyQt5.uic import loadUiType
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QKeySequence
-from ui_adicionargrupo import Ui_adicionarGrupoDlg
+from PyQt5.QtWidgets import QDialog, QApplication, QDialogButtonBox, QItemDelegate, QSpinBox, QDoubleSpinBox, QTableWidgetItem, QShortcut
+# from interfaces.ui_adicionargrupo import Ui_adicionarGrupoDlg
+
+Ui_adicionarGrupoDlg, QDialog = loadUiType('interfaces/adicionarGrupo.ui')
+
 
 class duracaoDelegate(QItemDelegate):
     def createEditor(self, parent, option, index):

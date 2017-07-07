@@ -1,10 +1,13 @@
+import sqlite3
 import sys
-import sqlite3, pickle
-from PyQt5.QtWidgets import QDialog, QApplication, QDialogButtonBox, QItemDelegate, QDoubleSpinBox, QAbstractSpinBox, QComboBox
+from PyQt5.uic import loadUiType
 from PyQt5.QtCore import pyqtSlot
-from ui_adicionarConfRegional import Ui_AdicionarConfDlg
-from adicionargrupo import AdicionarGrupo
+from PyQt5.QtWidgets import QDialog, QApplication, QDialogButtonBox
 
+from adicionargrupo import AdicionarGrupo
+# from interfaces.ui_adicionarConfRegional import Ui_AdicionarConfDlg
+
+Ui_AdicionarConfDlg, QDialog = loadUiType('interfaces/adicionarConfRegional.ui')
 
 class AdicionarConfRegional(QDialog, Ui_AdicionarConfDlg):
 
