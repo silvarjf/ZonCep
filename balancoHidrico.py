@@ -5,8 +5,8 @@ import pandas as pd
 from pyeto import deg2rad, daylight_hours, sunset_hour_angle, sol_dec
 
 from calculos import calculosDecendiais
+from calculos.cultura import Cultura
 from calculos.estrutura import VariaveisBalHidrico, ParamSimul, VariaveisSaida
-from cultura import Cultura
 from estacao import Estacao
 
 
