@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from pyeto import deg2rad, daylight_hours, sunset_hour_angle, sol_dec
 
-import calculosDecendiais
+from calculos import calculosDecendiais
 from calculos.estrutura import VariaveisBalHidrico, ParamSimul, VariaveisSaida
 from cultura import Cultura
 from estacao import Estacao
@@ -218,7 +218,7 @@ class balancoHidrico():
         else:
             kcProx = 1
 
-        return kcAtual + (kcProx - kcAtual)*nDias/calculosDecendiais.diasNoDecendio(diaAtual)
+        return kcAtual + (kcProx - kcAtual)*nDias / calculosDecendiais.diasNoDecendio(diaAtual)
 
     def calcularVrad(self, Hum, StRurMax):
         vRad = 100*(Hum - StRurMax)/self.parametros.RESERVAUTIL
