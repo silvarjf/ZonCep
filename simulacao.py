@@ -59,7 +59,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def simular(self):
         #print("simulando")
-        #subprocess.Popen("python intersarra.py", shell=True)
         estado = str(self.cboxEstado.currentText())
         inisim = str(self.dteIniSim.date().toPyDate())
         dataplantio = str(self.dtePlantio.date().toPyDate())
