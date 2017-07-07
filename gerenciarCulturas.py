@@ -1,10 +1,17 @@
-import sys, sqlite3, pickle
-from PyQt5.QtWidgets import QDialog, QApplication, QTreeWidgetItem, QTreeWidget, QDialogButtonBox
-from PyQt5.QtCore import pyqtSlot
+import pickle
+import sqlite3
+import sys
 from PyQt5.Qt import Qt
-from ui_crudCulturas import Ui_crudCulturasDialog
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtWidgets import QDialog, QApplication, QTreeWidgetItem, QTreeWidget, QDialogButtonBox
+from PyQt5.uic import loadUiType
 from adicionarConfRegional import AdicionarConfRegional
 from adicionargrupo import AdicionarGrupo
+# from interfaces.ui_crudCulturas import Ui_crudCulturasDialog
+
+
+Ui_crudCulturasDialog, QDialog = loadUiType('interfaces/crudCulturas.ui')
+
 
 class CrudCultura(QDialog, Ui_crudCulturasDialog):
 
