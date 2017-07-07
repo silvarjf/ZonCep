@@ -8,7 +8,7 @@ import sqlite3, pickle
 
 ### Interface para disparar simulações ###
 
-Ui_MainWindow, QMainWindow = loadUiType('menuqt.ui')
+Ui_MainWindow, QMainWindow = loadUiType('interfaces/menuqt.ui')
 
 tipossolo = ['1','2','3']
 anos = list()
